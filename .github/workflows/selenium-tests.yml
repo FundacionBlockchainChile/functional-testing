@@ -18,17 +18,25 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+    
+    - name: Setup Chrome
+      uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: stable
+    
+    - name: Setup ChromeDriver
+      uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: stable
+        chromedriver-version: stable
         
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Install Chrome
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y google-chrome-stable
-        
     - name: Run tests
       run: |
+        export CHROME_PATH=$(which chrome)
+        export CHROMEDRIVER_PATH=$(which chromedriver)
         pytest -v test_search.py 
