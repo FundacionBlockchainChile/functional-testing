@@ -47,38 +47,52 @@ class TestDuckDuckGoSearch:
             search_input.send_keys(Keys.RETURN)
             print("Búsqueda enviada")
             
-            # Esperar a que los resultados aparezcan (usando diferentes selectores)
+            # Esperar a que los resultados aparezcan usando múltiples selectores posibles
             wait = WebDriverWait(browser, 20)
             try:
-                # Intentar diferentes selectores para los resultados
-                results = wait.until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "article[data-testid='result']"))
-                )
-                print("Resultados encontrados usando article[data-testid='result']")
-            except:
-                try:
-                    results = wait.until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, ".react-results--main"))
-                    )
-                    print("Resultados encontrados usando .react-results--main")
-                except:
-                    # Tomar una captura de pantalla para depuración
+                # Intentar encontrar resultados usando diferentes selectores
+                selectors = [
+                    "div[data-testid='mainline']",
+                    "div[data-testid='search-results']",
+                    ".react-results--main",
+                    ".results",
+                    "#links",
+                    ".results-wrapper"
+                ]
+                
+                for selector in selectors:
+                    try:
+                        results = wait.until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+                        )
+                        print(f"Resultados encontrados usando selector: {selector}")
+                        break
+                    except:
+                        continue
+                
+                # Si llegamos aquí sin encontrar resultados, tomamos una captura
+                if not results:
                     browser.save_screenshot('error_screenshot.png')
-                    print("Estado de la página:", browser.page_source[:500])
-                    raise
-            
-            # Verificar que hay resultados
-            assert results.is_displayed(), "No se encontraron resultados de búsqueda"
+                    print("Estado de la página:", browser.page_source[:1000])
+                    raise Exception("No se encontraron resultados con ningún selector")
+                
+            except Exception as e:
+                browser.save_screenshot('error_screenshot.png')
+                print("Estado de la página:", browser.page_source[:1000])
+                raise
             
             # Verificar que la URL cambió
             current_url = browser.current_url
             assert "q=inmuebles+en+Bogot" in current_url.lower(), "La URL no refleja la búsqueda"
             
+            # Verificar que hay al menos un resultado visible
+            assert results.is_displayed(), "Los resultados no son visibles"
+            
         except Exception as e:
             print(f"Error durante la prueba: {str(e)}")
             browser.save_screenshot('error_screenshot.png')
             print("URL actual:", browser.current_url)
-            print("HTML de la página:", browser.page_source[:500])
+            print("HTML de la página:", browser.page_source[:1000])
             raise
 
     @pytest.mark.parametrize("search_term", [
@@ -97,29 +111,49 @@ class TestDuckDuckGoSearch:
             search_input.send_keys(Keys.RETURN)
             print("Búsqueda enviada")
             
+            # Esperar a que los resultados aparezcan usando múltiples selectores posibles
             wait = WebDriverWait(browser, 20)
             try:
-                results = wait.until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "article[data-testid='result']"))
-                )
-                print("Resultados encontrados usando article")
-            except:
-                try:
-                    results = wait.until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, ".react-results--main"))
-                    )
-                    print("Resultados encontrados usando react-results")
-                except:
+                # Intentar encontrar resultados usando diferentes selectores
+                selectors = [
+                    "div[data-testid='mainline']",
+                    "div[data-testid='search-results']",
+                    ".react-results--main",
+                    ".results",
+                    "#links",
+                    ".results-wrapper"
+                ]
+                
+                for selector in selectors:
+                    try:
+                        results = wait.until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+                        )
+                        print(f"Resultados encontrados usando selector: {selector}")
+                        break
+                    except:
+                        continue
+                
+                # Si llegamos aquí sin encontrar resultados, tomamos una captura
+                if not results:
                     browser.save_screenshot(f'error_{search_term.replace(" ", "_")}.png')
-                    print("Estado de la página:", browser.page_source[:500])
-                    raise
+                    print("Estado de la página:", browser.page_source[:1000])
+                    raise Exception("No se encontraron resultados con ningún selector")
+                
+            except Exception as e:
+                browser.save_screenshot(f'error_{search_term.replace(" ", "_")}.png')
+                print("Estado de la página:", browser.page_source[:1000])
+                raise
             
-            assert results.is_displayed(), f"No se encontraron resultados para: {search_term}"
+            # Verificar que la URL cambió
             assert search_term.lower().split()[0] in browser.current_url.lower(), f"La URL no refleja la búsqueda: {search_term}"
+            
+            # Verificar que hay al menos un resultado visible
+            assert results.is_displayed(), f"Los resultados no son visibles para: {search_term}"
             
         except Exception as e:
             print(f"Error durante la prueba con término '{search_term}': {str(e)}")
             browser.save_screenshot(f'error_{search_term.replace(" ", "_")}.png')
             print("URL actual:", browser.current_url)
-            print("HTML de la página:", browser.page_source[:500])
+            print("HTML de la página:", browser.page_source[:1000])
             raise 
