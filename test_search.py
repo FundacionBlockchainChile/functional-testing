@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from urllib.parse import unquote
 
 class TestDuckDuckGoSearch:
     @pytest.fixture
@@ -81,9 +82,12 @@ class TestDuckDuckGoSearch:
                 print("Estado de la página:", browser.page_source[:1000])
                 raise
             
-            # Verificar que la URL cambió
-            current_url = browser.current_url
-            assert "q=inmuebles+en+Bogot" in current_url.lower(), "La URL no refleja la búsqueda"
+            # Verificar que la URL cambió (decodificando la URL)
+            current_url = unquote(browser.current_url.lower())
+            print(f"URL decodificada: {current_url}")
+            search_terms = ["inmuebles", "bogotá"]
+            for term in search_terms:
+                assert term in current_url, f"Término '{term}' no encontrado en la URL"
             
             # Verificar que hay al menos un resultado visible
             assert results.is_displayed(), "Los resultados no son visibles"
@@ -145,8 +149,11 @@ class TestDuckDuckGoSearch:
                 print("Estado de la página:", browser.page_source[:1000])
                 raise
             
-            # Verificar que la URL cambió
-            assert search_term.lower().split()[0] in browser.current_url.lower(), f"La URL no refleja la búsqueda: {search_term}"
+            # Verificar que la URL cambió (decodificando la URL)
+            current_url = unquote(browser.current_url.lower())
+            print(f"URL decodificada: {current_url}")
+            main_term = search_term.lower().split()[0]
+            assert main_term in current_url, f"Término principal '{main_term}' no encontrado en la URL"
             
             # Verificar que hay al menos un resultado visible
             assert results.is_displayed(), f"Los resultados no son visibles para: {search_term}"
